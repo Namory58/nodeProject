@@ -1,14 +1,23 @@
 var emailService = require("../services/emailService");
 var usesModels = require("../models/users");
 const bcrypt = require("bcrypt");
-const registerDataStructure  = require("../utils/registerStructure");
+const registerDataStructure = require("../utils/registerStructure");
+const tokenService = require("../services/tokenService");
 
 
 module.exports = {
-  login: async function(req, res) {
-    return res.status(200).json({ message: "login" });
+  login: async function (req, res) {
+    try{
+      // Verification des données
+
+    }catch(eror){
+      return res
+        .status(500)
+        .json({ message: "Erreur au niveau de la connection Login." });
+    }
+   return res.status(200).json({ message: "login" });
   },
-  register: async function(req, res) {
+  register: async function (req, res) {
     const { error } = registerDataStructure.registerSchema.validate(req.body);
     if (error) {
       if (error.details[0].type === "object.unknown") {
@@ -16,7 +25,7 @@ module.exports = {
           error: true,
           message: `Le champ '${error.details[0].context.key}' n'est pas autorisé dans la requête.`
         });
-      }else{
+      } else {
         return res.status(400).json({
           error: true,
           message: error.details[0].message // Message d'erreur personnalisé
@@ -31,8 +40,7 @@ module.exports = {
         message: "Email invalide."
       });
     }
-
-    if (password.length < 8 || !emailService.isValidPassword(password)) {
+    if (!emailService.isValidPassword(password)) {
       return res.status(400).json({
         eror: true,
         message: "Mot de passe invalide."
@@ -40,13 +48,14 @@ module.exports = {
     }
     try {
       const emailExiste = await usesModels.cheackEmail(email);
-     
+
       if (emailExiste.length > 0) {
         return res.status(400).json({
           eror: true,
           message: "Adresse mail existe déjà."
         });
       }
+      //Hasher le mot de passe d'un utilisateurs
       const hashedPassword = await bcrypt.hash(password, 10);
       usesModels.insertUser(name, email, hashedPassword);
       return res.status(200).json({
@@ -64,20 +73,18 @@ module.exports = {
     }
   },
 
-  forgetPassword: async function(req, res) {
-    
+  forgetPassword: async function (req, res) {
+
     const email = req.body.email;
 
     const emailExiste = await usesModels.cheackEmail(email);
-    if(emailExiste.length==0){
+    if (emailExiste.length == 0) {
       return res.status(400).json({
         eror: true,
         message: "Email inconnu."
       });
     }
-    console.log("email correct");
-
-
+    console.log(email);
 
     return res.status(200).json({ message: "forgetPassword" });
   }
